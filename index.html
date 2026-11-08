@@ -30,6 +30,10 @@
     <!-- Inter Font & Lucide Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase SDKs (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -37,6 +41,40 @@
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row selection:bg-indigo-500 selection:text-white">
+
+    <!-- AUTHENTICATION OVERLAY / MODAL -->
+    <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-16 -top-16 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30 text-xl">A</div>
+                <div>
+                    <h2 class="font-bold text-xl tracking-tight text-white">Welcome to Attendly</h2>
+                    <p class="text-xs text-slate-400">Sign in with your SAP ID to view your dashboard</p>
+                </div>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button type="button" onclick="switchAuthMode('login')" id="auth-tab-login" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all">Sign In</button>
+                <button type="button" onclick="switchAuthMode('register')" id="auth-tab-register" class="flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all">Register</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">SAP ID (Student Number)</label>
+                    <input type="text" id="auth-sap" required placeholder="e.g. 500012345" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all mt-2">Sign In</button>
+            </form>
+            <div id="auth-error" class="text-xs text-rose-400 text-center hidden"></div>
+        </div>
+    </div>
 
     <!-- Mobile Header -->
     <header class="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
@@ -56,7 +94,7 @@
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">A</div>
                 <div>
                     <h1 class="font-bold text-base tracking-tight leading-tight">Attendly</h1>
-                    <span class="text-xs text-slate-400">Attendance Tracker</span>
+                    <span id="sidebar-sap-display" class="text-xs text-indigo-400 font-medium">SAP: Loading...</span>
                 </div>
             </div>
             <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white">
@@ -88,7 +126,7 @@
             </button>
         </nav>
 
-        <div class="p-4 border-t border-slate-800/60">
+        <div class="p-4 border-t border-slate-800/60 space-y-3">
             <div class="bg-slate-800/40 rounded-xl p-3.5 border border-slate-800">
                 <div class="flex items-center justify-between mb-1.5">
                     <span class="text-xs font-medium text-slate-300">Default Target</span>
@@ -98,6 +136,9 @@
                     <div id="sidebar-target-bar" class="bg-indigo-500 h-full rounded-full" style="width: 80%"></div>
                 </div>
             </div>
+            <button onclick="logoutUser()" class="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800/60 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 text-xs font-semibold rounded-xl border border-slate-700/50 transition-all">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+            </button>
         </div>
     </aside>
 
@@ -295,7 +336,7 @@
                 <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
                     <div>
                         <h4 class="text-sm font-semibold text-white">Export Attendance Data</h4>
-                        <p class="text-xs text-slate-400">Download your logs as a JSON/CSV file.</p>
+                        <p class="text-xs text-slate-400">Download your logs as a JSON file.</p>
                     </div>
                     <button onclick="exportData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition-all">Export JSON</button>
                 </div>
@@ -435,510 +476,487 @@
 
     <!-- Application Script Logic -->
     <script>
-        // State Management
-        let appData = JSON.parse(localStorage.getItem('attendly_data')) || {
+        // ==========================================
+        // FIREBASE CONFIGURATION SETUP
+        // ==========================================
+        // NOTE: Replace these placeholder credentials with your own free Firebase project config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForTemplatePlaceholder-ReplaceMe",
+            authDomain: "attendly-app.firebaseapp.com",
+            projectId: "attendly-app",
+            storageBucket: "attendly-app.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef"
+        };
+
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Default Template State for New Users
+        const defaultUserData = {
+            sapId: "",
+            settings: { defaultTarget: 80 },
             subjects: [
                 { id: 'sub_spc', name: 'Structural Programming using C', code: 'ES-BT101', color: '#10b981', target: 80 },
                 { id: 'sub_amr', name: 'Applied Mechanics and Robotics', code: 'ES-BT102', color: '#f59e0b', target: 80 },
                 { id: 'sub_iks', name: 'Indian Knowledge System', code: 'HS-BT102', color: '#14b8a6', target: 80 },
                 { id: 'sub_em', name: 'Engineering Mathematics-I', code: 'BS-BT101', color: '#6366f1', target: 80 },
                 { id: 'sub_qp', name: 'Quantum Physics', code: 'BS-BT102', color: '#3b82f6', target: 80 },
-                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#ec4899', target: 80 },
-                { id: 'sub_hw', name: 'Health and Wellness', code: 'MC-BT101', color: '#f43f5e', target: 80 },
-                { id: 'sub_iil', name: 'Ideation and Innovation Lab', code: 'ES-BT103', color: '#8b5cf6', target: 80 }
+                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#ec4899', target: 80 }
             ],
             timetable: [
                 { id: 'tt_m1', subjectId: 'sub_spc', day: 1, time: '14:00' },
                 { id: 'tt_m2', subjectId: 'sub_amr', day: 1, time: '16:00' },
                 { id: 'tt_t1', subjectId: 'sub_iks', day: 2, time: '08:00' },
                 { id: 'tt_t2', subjectId: 'sub_em', day: 2, time: '10:00' },
-                { id: 'tt_t3', subjectId: 'sub_spc', day: 2, time: '12:00' },
-                { id: 'tt_w1', subjectId: 'sub_qp', day: 3, time: '08:00' },
-                { id: 'tt_w2', subjectId: 'sub_qp', day: 3, time: '11:00' },
-                { id: 'tt_w3', subjectId: 'sub_amr', day: 3, time: '12:00' },
-                { id: 'tt_w4', subjectId: 'sub_eclt', day: 3, time: '13:00' },
-                { id: 'tt_w5', subjectId: 'sub_em', day: 3, time: '14:00' },
-                { id: 'tt_h1', subjectId: 'sub_eclt', day: 4, time: '10:00' },
-                { id: 'tt_h2', subjectId: 'sub_em', day: 4, time: '13:00' },
-                { id: 'tt_h3', subjectId: 'sub_amr', day: 4, time: '14:00' },
-                { id: 'tt_h4', subjectId: 'sub_hw', day: 4, time: '16:00' },
-                { id: 'tt_f1', subjectId: 'sub_iil', day: 5, time: '08:00' },
-                { id: 'tt_f2', subjectId: 'sub_em', day: 5, time: '10:00' },
-                { id: 'tt_f3', subjectId: 'sub_qp', day: 5, time: '11:00' }
+                { id: 'tt_t3', subjectId: 'sub_spc', day: 2, time: '12:00' }
             ],
             attendance: {},
-            assignments: [], // format: { id, subjectId, title, dueDate, description, status: 'pending'|'completed' }
-            settings: { defaultTarget: 80 }
+            assignments: []
         };
 
-        let currentActiveTab = 'dashboard';
-        let selectedAttendanceDate = new Date().toISOString().split('T')[0];
-        let calendarDate = new Date();
-        let currentAssignmentFilter = 'all';
+        let appData = JSON.parse(JSON.stringify(defaultUserData));
+        let currentUserUid = null;
+        let authMode = 'login'; // 'login' or 'register'
 
-        function saveData() {
-            localStorage.setItem('attendly_data', JSON.stringify(appData));
-            initApp();
+        // Auth Mode Switcher UI
+        function switchAuthMode(mode) {
+            authMode = mode;
+            const loginBtn = document.getElementById('auth-tab-login');
+            const registerBtn = document.getElementById('auth-tab-register');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.classList.add('hidden');
+
+            if (mode === 'login') {
+                loginBtn.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all";
+                registerBtn.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+                submitBtn.innerText = "Sign In";
+            } else {
+                registerBtn.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white transition-all";
+                loginBtn.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all";
+                submitBtn.innerText = "Create Account";
+            }
         }
 
-        // Initialize Lucide Icons
-        function refreshIcons() {
+        // Helper: Convert SAP ID to valid Firebase Auth Email format
+        function sapToEmail(sap) {
+            return `${sap.trim().toLowerCase()}@attendly.local`;
+        }
+
+        // Handle Login & Registration Submit
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const sap = document.getElementById('auth-sap').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.classList.add('hidden');
+
+            if (!sap || !password) return;
+            const email = sapToEmail(sap);
+
+            if (authMode === 'register') {
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        currentUserUid = userCredential.user.uid;
+                        appData = JSON.parse(JSON.stringify(defaultUserData));
+                        appData.sapId = sap;
+                        saveUserDataToFirestore();
+                        document.getElementById('auth-overlay').classList.add('hidden');
+                        initializeAppUI();
+                    })
+                    .catch((error) => {
+                        errorDiv.innerText = error.message;
+                        errorDiv.classList.remove('hidden');
+                    });
+            } else {
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        currentUserUid = userCredential.user.uid;
+                        document.getElementById('auth-overlay').classList.add('hidden');
+                        fetchUserDataFromFirestore();
+                    })
+                    .catch((error) => {
+                        errorDiv.innerText = "Invalid SAP ID or Password. Try Registering if new.";
+                        errorDiv.classList.remove('hidden');
+                    });
+            }
+        }
+
+        // Logout Handler
+        function logoutUser() {
+            auth.signOut().then(() => {
+                currentUserUid = null;
+                document.getElementById('auth-overlay').classList.remove('hidden');
+                document.getElementById('auth-sap').value = '';
+                document.getElementById('auth-password').value = '';
+            });
+        }
+
+        // Listen to Auth State Changes
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUserUid = user.uid;
+                document.getElementById('auth-overlay').classList.add('hidden');
+                fetchUserDataFromFirestore();
+            } else {
+                currentUserUid = null;
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            }
+        });
+
+        // Save User Data to Firestore
+        function persistData() {
+            if (!currentUserUid) return;
+            localStorage.setItem('attendly_cache_' + currentUserUid, JSON.stringify(appData));
+            db.collection('users').doc(currentUserUid).set(appData, { merge: true }).catch(err => console.error("Sync error:", err));
+        }
+
+        function saveUserDataToFirestore() {
+            persistData();
+        }
+
+        // Fetch User Data from Firestore
+        function fetchUserDataFromFirestore() {
+            if (!currentUserUid) return;
+            db.collection('users').doc(currentUserUid).get()
+                .then((doc) => {
+                    if (doc.exists && doc.data().subjects) {
+                        appData = doc.data();
+                    } else {
+                        // Fallback initialize
+                        appData = JSON.parse(JSON.stringify(defaultUserData));
+                        if(auth.currentUser && auth.currentUser.email) {
+                            appData.sapId = auth.currentUser.email.split('@')[0].toUpperCase();
+                        }
+                        persistData();
+                    }
+                    initializeAppUI();
+                })
+                .catch((err) => {
+                    console.error("Error fetching data:", err);
+                    // Fallback to local cache if offline
+                    let cached = localStorage.getItem('attendly_cache_' + currentUserUid);
+                    if (cached) appData = JSON.parse(cached);
+                    initializeAppUI();
+                });
+        }
+
+        // ==========================================
+        // APP INITIALIZATION & NAVIGATION LOGIC
+        // ==========================================
+        let currentTab = 'dashboard';
+        let currentDate = new Date().toISOString().split('T')[0];
+        let calendarCurrentDate = new Date();
+        let selectedAssignmentFilter = 'all';
+
+        function initializeAppUI() {
+            if(appData.sapId) {
+                document.getElementById('sidebar-sap-display').innerText = "SAP: " + appData.sapId.toUpperCase();
+            } else if(auth.currentUser && auth.currentUser.email) {
+                document.getElementById('sidebar-sap-display').innerText = "SAP: " + auth.currentUser.email.split('@')[0].toUpperCase();
+            }
+            
+            document.getElementById('settings-default-target').value = appData.settings?.defaultTarget || 80;
+            document.getElementById('sidebar-target-display').innerText = (appData.settings?.defaultTarget || 80) + '%';
+            document.getElementById('sidebar-target-bar').style.width = (appData.settings?.defaultTarget || 80) + '%';
+            
+            document.getElementById('attendance-date-picker').value = currentDate;
+            
+            switchTab(currentTab);
             lucide.createIcons();
         }
 
-        // Tab Navigation
         function switchTab(tabId) {
-            currentActiveTab = tabId;
+            currentTab = tabId;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
-                if(btn.dataset.target === tabId) {
-                    btn.classList.add('bg-indigo-600/10', 'text-indigo-400', 'font-semibold');
-                    btn.classList.remove('text-slate-400');
+                if(btn.getAttribute('data-target') === tabId) {
+                    btn.className = "nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
                 } else {
-                    btn.classList.remove('bg-indigo-600/10', 'text-indigo-400', 'font-semibold');
-                    btn.classList.add('text-slate-400');
+                    btn.className = "nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50";
                 }
             });
 
-            // Close mobile menu if open
-            document.getElementById('sidebar').classList.add('-translate-x-full');
+            // Render specific tab content
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'attendance') loadAttendanceForDate();
+            if (tabId === 'subjects') renderSubjects();
+            if (tabId === 'timetable') renderTimetable();
+            if (tabId === 'assignments') renderAssignments();
+            if (tabId === 'calendar') renderCalendar();
 
-            // Specific Tab Renders
-            if(tabId === 'dashboard') renderDashboard();
-            if(tabId === 'subjects') renderSubjects();
-            if(tabId === 'assignments') renderAssignments(currentAssignmentFilter);
-            if(tabId === 'attendance') {
-                document.getElementById('attendance-date-picker').value = selectedAttendanceDate;
-                loadAttendanceForDate();
-            }
-            if(tabId === 'timetable') renderTimetable();
-            if(tabId === 'calendar') renderCalendar();
-            if(tabId === 'settings') {
-                document.getElementById('settings-default-target').value = appData.settings.defaultTarget;
-            }
-            refreshIcons();
+            lucide.createIcons();
         }
 
-        // Mobile Menu Toggle
-        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.remove('-translate-x-full');
-        });
-        document.getElementById('close-sidebar').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.add('-translate-x-full');
-        });
-
-        // Calculations helper
-        function calculateStats() {
-            let totalAttended = 0;
-            let totalMissed = 0;
-            let totalConducted = 0;
-
-            const subjectStats = {};
-            appData.subjects.forEach(sub => {
-                subjectStats[sub.id] = { attended: 0, missed: 0, conducted: 0, name: sub.name, code: sub.code, color: sub.color, target: sub.target };
-            });
-
-            Object.keys(appData.attendance).forEach(date => {
-                const dayLog = appData.attendance[date];
-                Object.keys(dayLog).forEach(subId => {
-                    if(!subjectStats[subId]) return;
-                    const status = dayLog[subId];
-                    if(status === 'present') {
-                        subjectStats[subId].attended++;
-                        subjectStats[subId].conducted++;
-                        totalAttended++;
-                        totalConducted++;
-                    } else if(status === 'absent') {
-                        subjectStats[subId].missed++;
-                        subjectStats[subId].conducted++;
-                        totalMissed++;
-                        totalConducted++;
-                    }
-                });
-            });
-
-            Object.keys(subjectStats).forEach(subId => {
-                const s = subjectStats[subId];
-                s.percentage = s.conducted > 0 ? (s.attended / s.conducted) * 100 : 0;
-                
-                const targetDec = s.target / 100;
-                if(s.conducted === 0) {
-                    s.safeAbsences = '-';
-                    s.recoverNeeded = 0;
-                } else if(s.percentage >= s.target) {
-                    s.safeAbsences = Math.max(0, Math.floor((s.attended / targetDec) - s.conducted));
-                    s.recoverNeeded = 0;
-                } else {
-                    s.safeAbsences = 0;
-                    s.recoverNeeded = Math.ceil((targetDec * s.conducted - s.attended) / (1 - targetDec));
-                }
-            });
-
-            const overallPercentage = totalConducted > 0 ? (totalAttended / totalConducted) * 100 : 0;
-            return { totalAttended, totalMissed, totalConducted, overallPercentage, subjectStats };
-        }
-
-        // Render Dashboard
+        // ==========================================
+        // DASHBOARD COMPUTATIONS & RENDER
+        // ==========================================
         function renderDashboard() {
-            const stats = calculateStats();
-            
             const now = new Date();
             const hours = now.getHours();
-            let greeting = 'Good morning! ☀️';
-            if(hours >= 12 && hours < 17) greeting = 'Good afternoon! 🌤️';
-            else if(hours >= 17) greeting = 'Good evening! 🌙';
+            let greeting = "Good morning! 👋";
+            if (hours >= 12 && hours < 17) greeting = "Good afternoon! ☀️";
+            else if (hours >= 17) greeting = "Good evening! 🌙";
             document.getElementById('greeting-title').innerText = greeting;
             document.getElementById('current-date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            document.getElementById('stat-overall-pct').innerText = stats.overallPercentage.toFixed(1) + '%';
-            document.getElementById('stat-attended').innerText = stats.totalAttended;
-            document.getElementById('stat-missed').innerText = stats.totalMissed;
-            document.getElementById('stat-total').innerText = stats.totalConducted;
+            let totalAttended = 0;
+            let totalMissed = 0;
+
+            Object.values(appData.attendance || {}).forEach(dateLogs => {
+                Object.values(dateLogs || {}).forEach(status => {
+                    if (status === 'present') totalAttended++;
+                    if (status === 'absent') totalMissed++;
+                });
+            });
+
+            const totalConducted = totalAttended + totalMissed;
+            const overallPct = totalConducted > 0 ? Math.round((totalAttended / totalConducted) * 100) : 0;
+
+            document.getElementById('stat-attended').innerText = totalAttended;
+            document.getElementById('stat-missed').innerText = totalMissed;
+            document.getElementById('stat-total').innerText = totalConducted;
+            document.getElementById('stat-overall-pct').innerText = overallPct + '%';
 
             const badge = document.getElementById('stat-overall-badge');
-            if(stats.totalConducted === 0) {
-                badge.innerText = 'No Data';
-                badge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400';
-            } else if(stats.overallPercentage >= appData.settings.defaultTarget) {
-                badge.innerText = 'On Track';
-                badge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+            const defaultTarget = appData.settings?.defaultTarget || 80;
+            if (totalConducted === 0) {
+                badge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400";
+                badge.innerText = "No Data";
+            } else if (overallPct >= defaultTarget) {
+                badge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400";
+                badge.innerText = "On Track";
             } else {
-                badge.innerText = 'Below Target';
-                badge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                badge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400";
+                badge.innerText = "Below Target";
             }
 
-            const insightsContainer = document.getElementById('insights-content');
-            if(stats.totalConducted === 0) {
-                insightsContainer.innerHTML = `
-                    <div class="md:col-span-3 text-sm text-slate-400">
-                        Mark attendance for your classes to unlock personalized insights and intelligent attendance buffers!
-                    </div>
-                `;
-            } else {
-                const target = appData.settings.defaultTarget;
-                const totalTargetDec = target / 100;
-                const safeOverall = Math.max(0, Math.floor((stats.totalAttended / totalTargetDec) - stats.totalConducted));
-                const recoverOverall = stats.overallPercentage >= target ? 0 : Math.ceil((totalTargetDec * stats.totalConducted - stats.totalAttended) / (1 - totalTargetDec));
+            // Render Insights
+            renderInsights(overallPct, totalAttended, totalMissed, totalConducted);
 
-                insightsContainer.innerHTML = `
-                    <div class="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 font-bold text-lg">${stats.overallPercentage.toFixed(0)}%</div>
-                        <div>
-                            <span class="text-xs text-slate-400 block">Overall Target</span>
-                            <span class="text-base font-bold text-white">${target}% Minimum</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-                        <div class="w-12 h-12 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold text-lg">${safeOverall}</div>
-                        <div>
-                            <span class="text-xs text-slate-400 block">Safe Absences</span>
-                            <span class="text-xs text-slate-300 font-medium">${safeOverall === 0 ? 'No classes can be missed safely' : 'Classes you can skip safely'}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-                        <div class="w-12 h-12 rounded-xl bg-amber-600/20 flex items-center justify-center text-amber-400 font-bold text-lg">${recoverOverall}</div>
-                        <div>
-                            <span class="text-xs text-slate-400 block">Classes to Recover</span>
-                            <span class="text-xs text-slate-300 font-medium">${recoverOverall === 0 ? 'Currently meeting attendance goal!' : 'Consecutive classes needed'}</span>
-                        </div>
-                    </div>
-                `;
-            }
-
+            // Render Subject Breakdown cards
             const grid = document.getElementById('dashboard-subjects-grid');
-            if(appData.subjects.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-500 text-sm">No subjects added yet. Add one in the Subjects tab.</div>`;
+            if (!appData.subjects || appData.subjects.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-sm">No subjects added yet. Add subjects in the Subjects tab.</div>`;
                 return;
             }
 
-            grid.innerHTML = '';
+            let html = '';
             appData.subjects.forEach(sub => {
-                const s = stats.subjectStats[sub.id];
-                const statusColor = s.conducted === 0 ? 'bg-slate-700' : s.percentage >= sub.target ? 'bg-emerald-500' : 'bg-rose-500';
-                const statusText = s.conducted === 0 ? 'No classes recorded' : s.percentage >= sub.target ? 'Safe' : 'Action Required';
-                const statusBadgeClass = s.conducted === 0 ? 'bg-slate-800 text-slate-400' : s.percentage >= sub.target ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400';
+                let subAttended = 0;
+                let subMissed = 0;
+                Object.values(appData.attendance || {}).forEach(dateLogs => {
+                    if (dateLogs && dateLogs[sub.id] === 'present') subAttended++;
+                    if (dateLogs && dateLogs[sub.id] === 'absent') subMissed++;
+                });
+                const subTotal = subAttended + subMissed;
+                const subPct = subTotal > 0 ? Math.round((subAttended / subTotal) * 100) : 0;
+                const subTarget = sub.target || defaultTarget;
 
-                grid.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 hover:border-slate-700 transition-all">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-md text-white mb-1 inline-block" style="background-color: ${sub.color}">${sub.code || 'SUB'}</span>
-                                <h4 class="font-bold text-white text-base">${sub.name}</h4>
-                            </div>
-                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${statusBadgeClass}">${statusText}</span>
+                html += `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="flex items-start justify-between pl-2">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
+                            <h4 class="font-bold text-white text-base tracking-tight">${sub.name}</h4>
                         </div>
-                        <div class="flex items-baseline justify-between">
-                            <span class="text-3xl font-bold text-white">${s.percentage.toFixed(1)}%</span>
-                            <span class="text-xs text-slate-400">Target: ${sub.target}%</span>
+                        <span class="text-lg font-extrabold ${subPct >= subTarget ? 'text-emerald-400' : 'text-rose-400'}">${subPct}%</span>
+                    </div>
+                    <div class="pl-2 space-y-1.5">
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500" style="width: ${subPct}%; background-color: ${sub.color || '#6366f1'}"></div>
                         </div>
-                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500" style="width: ${s.percentage}%; background-color: ${sub.color}"></div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center">
-                            <div>
-                                <span class="text-[10px] uppercase text-slate-500 block">Attended</span>
-                                <span class="text-sm font-bold text-emerald-400">${s.attended}</span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] uppercase text-slate-500 block">Missed</span>
-                                <span class="text-sm font-bold text-rose-400">${s.missed}</span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] uppercase text-slate-500 block">Safe Miss</span>
-                                <span class="text-sm font-bold text-indigo-400">${s.safeAbsences}</span>
-                            </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span>Attended: <strong class="text-white">${subAttended}/${subTotal}</strong></span>
+                            <span>Target: <strong class="text-indigo-400">${subTarget}%</strong></span>
                         </div>
                     </div>
-                `;
+                </div>`;
             });
-            refreshIcons();
+            grid.innerHTML = html;
         }
 
-        // Assignments Logic
-        function renderAssignments(filter = 'all') {
-            currentAssignmentFilter = filter;
-            
-            // Highlight active filter button
-            ['all', 'pending', 'completed'].forEach(f => {
-                const btn = document.getElementById(`filter-btn-${f}`);
-                if(btn) {
-                    if(f === filter) {
-                        btn.className = 'px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg transition-all';
-                    } else {
-                        btn.className = 'px-3 py-1.5 text-xs font-semibold bg-slate-800 text-slate-400 rounded-lg hover:text-white transition-all';
-                    }
+        function renderInsights(overallPct, attended, missed, total) {
+            const container = document.getElementById('insights-content');
+            const target = appData.settings?.defaultTarget || 80;
+
+            if (total === 0) {
+                container.innerHTML = `
+                    <div class="md:col-span-3 text-slate-400 text-sm">
+                        Start marking your daily attendance or set up your weekly timetable to receive automated attendance suggestions and bunker safety calculations!
+                    </div>`;
+                return;
+            }
+
+            let adviceText = "";
+            let badgeColor = "text-emerald-400";
+            let statusIcon = "check-circle-2";
+
+            if (overallPct >= target) {
+                // Calculate how many can be bunked safely
+                // formula: (attended / (total + x)) >= (target/100) => x <= (attended * 100 / target) - total
+                const safeBunks = Math.floor((attended * 100 / target) - total);
+                if (safeBunks > 0) {
+                    adviceText = `You are comfortably above target! You can safely miss up to <strong>${safeBunks} upcoming classes</strong> without dropping below your ${target}% goal.`;
+                } else {
+                    adviceText = `You are right on target (${target}%). Attend your next class to keep your buffer secure!`;
                 }
-            });
-
-            const grid = document.getElementById('assignments-grid');
-            let tasks = appData.assignments || [];
-
-            if(filter === 'pending') {
-                tasks = tasks.filter(t => t.status === 'pending');
-            } else if(filter === 'completed') {
-                tasks = tasks.filter(t => t.status === 'completed');
+            } else {
+                // Calculate how many classes need to be attended consecutively to bounce back
+                // formula: ((attended + x) / (total + x)) >= (target/100)
+                let needed = 0;
+                let tempAttended = attended;
+                let tempTotal = total;
+                while ((tempAttended / tempTotal) * 100 < target && needed < 50) {
+                    tempAttended++;
+                    tempTotal++;
+                    needed++;
+                }
+                badgeColor = "text-rose-400";
+                statusIcon = "alert-triangle";
+                adviceText = `You are currently below target. You need to attend the next <strong>${needed} consecutive classes</strong> to recover back to ${target}%.`;
             }
 
-            if(tasks.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">No assignments found here. Click 'Add Assignment' to create one!</div>`;
-                return;
-            }
-
-            grid.innerHTML = '';
-            tasks.forEach(task => {
-                const sub = appData.subjects.find(s => s.id === task.subjectId) || { name: 'General', color: '#6366f1', code: 'GEN' };
-                const isCompleted = task.status === 'completed';
-                
-                grid.innerHTML += `
-                    <div class="bg-slate-900 border ${isCompleted ? 'border-slate-800/50 opacity-75' : 'border-slate-800'} rounded-2xl p-5 space-y-3 flex flex-col justify-between transition-all">
-                        <div class="space-y-2">
-                            <div class="flex items-start justify-between">
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-md text-white inline-block" style="background-color: ${sub.color}">${sub.name}</span>
-                                <button onclick="deleteAssignment('${task.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                            <h4 class="font-bold text-white text-base ${isCompleted ? 'line-through text-slate-400' : ''}">${task.title}</h4>
-                            ${task.description ? `<p class="text-xs text-slate-400 line-clamp-2">${task.description}</p>` : ''}
-                        </div>
-                        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                            <span class="text-slate-400 flex items-center gap-1.5">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Due: ${task.dueDate}
-                            </span>
-                            <button onclick="toggleAssignmentStatus('${task.id}')" class="px-3 py-1.5 rounded-xl font-semibold transition-all ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">
-                                ${isCompleted ? '✓ Completed' : 'Mark Done'}
-                            </button>
-                        </div>
+            container.innerHTML = `
+                <div class="flex items-start gap-3 md:col-span-2">
+                    <div class="p-2 rounded-xl bg-indigo-500/10 ${badgeColor} mt-0.5">
+                        <i data-lucide="${statusIcon}" class="w-5 h-5"></i>
                     </div>
-                `;
-            });
-            refreshIcons();
+                    <div>
+                        <h4 class="text-sm font-semibold text-white mb-1">Bunk Planner & Status Report</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">${adviceText}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+                    <span class="text-xs font-medium text-slate-400">Current Safety Margin</span>
+                    <span class="text-lg font-bold text-white">${overallPct >= target ? 'Safe Zone 🟢' : 'Recovery Needed 🔴'}</span>
+                    <span class="text-[11px] text-slate-500">Goal set to ${target}% attendance criteria.</span>
+                </div>`;
         }
 
-        function filterAssignments(filter) {
-            renderAssignments(filter);
-        }
-
-        function openAssignmentModal() {
-            const select = document.getElementById('asg-subject-id');
-            select.innerHTML = '';
-            if(appData.subjects.length === 0) {
-                alert('Please add a subject first before creating assignments.');
-                switchTab('subjects');
-                return;
-            }
-            appData.subjects.forEach(sub => {
-                select.innerHTML += `<option value="${sub.id}">${sub.name} (${sub.code || 'Sub'})</option>`;
-            });
-            document.getElementById('asg-title').value = '';
-            document.getElementById('asg-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('asg-desc').value = '';
-            document.getElementById('assignment-modal').classList.remove('hidden');
-        }
-
-        function closeAssignmentModal() {
-            document.getElementById('assignment-modal').classList.add('hidden');
-        }
-
-        function handleAssignmentSubmit(e) {
-            e.preventDefault();
-            const subjectId = document.getElementById('asg-subject-id').value;
-            const title = document.getElementById('asg-title').value;
-            const dueDate = document.getElementById('asg-date').value;
-            const description = document.getElementById('asg-desc').value;
-
-            if(!appData.assignments) appData.assignments = [];
-
-            appData.assignments.push({
-                id: 'asg_' + Date.now(),
-                subjectId,
-                title,
-                dueDate,
-                description,
-                status: 'pending'
-            });
-
-            saveData();
-            closeAssignmentModal();
-            renderAssignments(currentAssignmentFilter);
-        }
-
-        function toggleAssignmentStatus(id) {
-            const task = appData.assignments.find(t => t.id === id);
-            if(task) {
-                task.status = task.status === 'pending' ? 'completed' : 'pending';
-                saveData();
-                renderAssignments(currentAssignmentFilter);
-            }
-        }
-
-        function deleteAssignment(id) {
-            if(confirm('Delete this assignment?')) {
-                appData.assignments = appData.assignments.filter(t => t.id !== id);
-                saveData();
-                renderAssignments(currentAssignmentFilter);
-            }
-        }
-
-        // Attendance Marking Tab
+        // ==========================================
+        // DAILY ATTENDANCE TAB LOGIC
+        // ==========================================
         function changeAttendanceDate(days) {
-            const d = new Date(selectedAttendanceDate);
+            const d = new Date(currentDate);
             d.setDate(d.getDate() + days);
-            selectedAttendanceDate = d.toISOString().split('T')[0];
-            document.getElementById('attendance-date-picker').value = selectedAttendanceDate;
+            currentDate = d.toISOString().split('T')[0];
+            document.getElementById('attendance-date-picker').value = currentDate;
             loadAttendanceForDate();
         }
 
         function setAttendanceToday() {
-            selectedAttendanceDate = new Date().toISOString().split('T')[0];
-            document.getElementById('attendance-date-picker').value = selectedAttendanceDate;
+            currentDate = new Date().toISOString().split('T')[0];
+            document.getElementById('attendance-date-picker').value = currentDate;
             loadAttendanceForDate();
         }
 
         function loadAttendanceForDate() {
-            selectedAttendanceDate = document.getElementById('attendance-date-picker').value;
+            currentDate = document.getElementById('attendance-date-picker').value;
             const container = document.getElementById('attendance-classes-container');
-            
-            if(appData.subjects.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">Please add subjects first before marking attendance.</div>`;
+
+            if (!appData.subjects || appData.subjects.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-sm">No subjects available. Please add subjects first.</div>`;
                 return;
             }
 
-            let html = '<div class="space-y-3">';
+            if (!appData.attendance) appData.attendance = {};
+            if (!appData.attendance[currentDate]) appData.attendance[currentDate] = {};
+
+            let html = '';
             appData.subjects.forEach(sub => {
-                const dateLog = appData.attendance[selectedAttendanceDate] || {};
-                const currentStatus = dateLog[sub.id] || 'none';
+                const status = appData.attendance[currentDate][sub.id] || 'unmarked'; // 'present', 'absent', 'unmarked'
+                
+                let presentBtnClass = status === 'present' ? "px-4 py-2 bg-emerald-600 text-white font-semibold rounded-xl text-xs shadow-md shadow-emerald-600/20" : "px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition-all";
+                let absentBtnClass = status === 'absent' ? "px-4 py-2 bg-rose-600 text-white font-semibold rounded-xl text-xs shadow-md shadow-rose-600/20" : "px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition-all";
 
                 html += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-10 rounded-full" style="background-color: ${sub.color}"></div>
-                            <div>
-                                <h4 class="font-bold text-white text-sm">${sub.name}</h4>
-                                <span class="text-xs text-slate-400">${sub.code || 'General'}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="markAttendance('${selectedAttendanceDate}', '${sub.id}', 'present')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${currentStatus === 'present' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">Present</button>
-                            <button onclick="markAttendance('${selectedAttendanceDate}', '${sub.id}', 'absent')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${currentStatus === 'absent' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">Absent</button>
-                            <button onclick="markAttendance('${selectedAttendanceDate}', '${sub.id}', 'none')" class="px-3 py-2 rounded-xl text-xs font-semibold transition-all ${currentStatus === 'none' ? 'bg-slate-700 text-white' : 'bg-slate-800/50 text-slate-500 hover:bg-slate-800'}">Clear</button>
-                        </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="pl-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
+                        <h4 class="font-bold text-white text-sm">${sub.name}</h4>
                     </div>
-                `;
+                    <div class="flex items-center gap-2 pl-2 sm:pl-0">
+                        <button onclick="markAttendance('${sub.id}', 'present')" class="${presentBtnClass}">Present</button>
+                        <button onclick="markAttendance('${sub.id}', 'absent')" class="${absentBtnClass}">Absent</button>
+                        <button onclick="markAttendance('${sub.id}', 'unmarked')" class="p-2 text-slate-500 hover:text-slate-300 text-xs" title="Clear status"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
             });
-            html += '</div>';
             container.innerHTML = html;
+            lucide.createIcons();
         }
 
-        function markAttendance(date, subId, status) {
-            if(!appData.attendance[date]) {
-                appData.attendance[date] = {};
-            }
-            if(status === 'none') {
-                delete appData.attendance[date][subId];
-                if(Object.keys(appData.attendance[date]).length === 0) {
-                    delete appData.attendance[date];
-                }
+        function markAttendance(subId, status) {
+            if (!appData.attendance[currentDate]) appData.attendance[currentDate] = {};
+            if (status === 'unmarked') {
+                delete appData.attendance[currentDate][subId];
             } else {
-                appData.attendance[date][subId] = status;
+                appData.attendance[currentDate][subId] = status;
             }
-            saveData();
+            saveUserDataToFirestore();
             loadAttendanceForDate();
         }
 
-        // Subjects Management
+        // ==========================================
+        // SUBJECTS MANAGEMENT
+        // ==========================================
         function renderSubjects() {
             const grid = document.getElementById('subjects-grid');
-            if(appData.subjects.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-sm">No subjects created yet.</div>`;
+            if (!appData.subjects || appData.subjects.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-sm">No subjects added. Click 'Add New Subject' above.</div>`;
                 return;
             }
 
-            const stats = calculateStats();
-            grid.innerHTML = '';
+            let html = '';
             appData.subjects.forEach(sub => {
-                const s = stats.subjectStats[sub.id];
-                grid.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-4 h-4 rounded-full" style="background-color: ${sub.color}"></div>
-                                <div>
-                                    <h4 class="font-bold text-white text-base">${sub.name}</h4>
-                                    <span class="text-xs text-slate-400">${sub.code || 'No code'} • Target: ${sub.target}%</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1">
-                                <button onclick="editSubject('${sub.id}')" class="p-2 text-slate-400 hover:text-white"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                <button onclick="deleteSubject('${sub.id}')" class="p-2 text-rose-400 hover:text-rose-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
+                html += `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="flex items-start justify-between pl-2">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
+                            <h4 class="font-bold text-white text-base">${sub.name}</h4>
                         </div>
-                        <div class="flex items-baseline justify-between pt-2 border-t border-slate-800/80">
-                            <span class="text-2xl font-bold text-white">${s.percentage.toFixed(1)}%</span>
-                            <span class="text-xs text-slate-400">${s.attended} attended / ${s.conducted} total</span>
+                        <div class="flex items-center gap-1">
+                            <button onclick="openSubjectModal('${sub.id}')" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                            <button onclick="deleteSubject('${sub.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                `;
+                    <div class="pl-2 flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+                        <span>Target Attendance: <strong class="text-indigo-400">${sub.target || 80}%</strong></span>
+                    </div>
+                </div>`;
             });
-            refreshIcons();
+            grid.innerHTML = html;
+            lucide.createIcons();
         }
 
         function openSubjectModal(subId = null) {
             document.getElementById('subject-modal').classList.remove('hidden');
-            if(subId) {
+            if (subId) {
+                document.getElementById('subject-modal-title').innerText = "Edit Subject";
                 const sub = appData.subjects.find(s => s.id === subId);
-                document.getElementById('subject-modal-title').innerText = 'Edit Subject';
-                document.getElementById('edit-subject-id').value = sub.id;
-                document.getElementById('sub-name').value = sub.name;
-                document.getElementById('sub-code').value = sub.code || '';
-                document.getElementById('sub-target').value = sub.target;
-                selectColor(sub.color);
+                if (sub) {
+                    document.getElementById('edit-subject-id').value = sub.id;
+                    document.getElementById('sub-name').value = sub.name;
+                    document.getElementById('sub-code').value = sub.code || '';
+                    document.getElementById('sub-target').value = sub.target || 80;
+                    selectColor(sub.color || '#6366f1');
+                }
             } else {
-                document.getElementById('subject-modal-title').innerText = 'Add Subject';
+                document.getElementById('subject-modal-title').innerText = "Add Subject";
+                document.getElementById('subject-form').reset();
                 document.getElementById('edit-subject-id').value = '';
-                document.getElementById('sub-name').value = '';
-                document.getElementById('sub-code').value = '';
-                document.getElementById('sub-target').value = appData.settings.defaultTarget;
                 selectColor('#6366f1');
             }
         }
@@ -950,7 +968,7 @@
         function selectColor(colorHex) {
             document.getElementById('sub-color').value = colorHex;
             document.querySelectorAll('.color-opt').forEach(btn => {
-                if(btn.dataset.color === colorHex) {
+                if (btn.getAttribute('data-color') === colorHex) {
                     btn.classList.add('ring-2', 'ring-offset-2', 'ring-offset-slate-900', 'ring-indigo-500');
                 } else {
                     btn.classList.remove('ring-2', 'ring-offset-2', 'ring-offset-slate-900', 'ring-indigo-500');
@@ -961,89 +979,110 @@
         function handleSubjectSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('edit-subject-id').value;
-            const name = document.getElementById('sub-name').value;
-            const code = document.getElementById('sub-code').value;
-            const target = parseInt(document.getElementById('sub-target').value);
+            const name = document.getElementById('sub-name').value.trim();
+            const code = document.getElementById('sub-code').value.trim();
+            const target = parseInt(document.getElementById('sub-target').value) || 80;
             const color = document.getElementById('sub-color').value;
 
-            if(id) {
+            if (!appData.subjects) appData.subjects = [];
+
+            if (id) {
                 const sub = appData.subjects.find(s => s.id === id);
-                sub.name = name;
-                sub.code = code;
-                sub.target = target;
-                sub.color = color;
+                if (sub) {
+                    sub.name = name;
+                    sub.code = code;
+                    sub.target = target;
+                    sub.color = color;
+                }
             } else {
-                const newSub = { id: 'sub_' + Date.now(), name, code, target, color };
+                const newSub = {
+                    id: 'sub_' + Date.now(),
+                    name,
+                    code,
+                    target,
+                    color
+                };
                 appData.subjects.push(newSub);
             }
 
-            saveData();
+            saveUserDataToFirestore();
             closeSubjectModal();
             renderSubjects();
         }
 
-        function editSubject(id) {
-            openSubjectModal(id);
-        }
-
-        function deleteSubject(id) {
-            if(confirm('Are you sure you want to delete this subject?')) {
-                appData.subjects = appData.subjects.filter(s => s.id !== id);
-                appData.timetable = appData.timetable.filter(t => t.subjectId !== id);
-                if(appData.assignments) appData.assignments = appData.assignments.filter(a => a.subjectId !== id);
-                saveData();
+        function deleteSubject(subId) {
+            if (confirm("Are you sure you want to delete this subject?")) {
+                appData.subjects = appData.subjects.filter(s => s.id !== subId);
+                appData.timetable = (appData.timetable || []).filter(t => t.subjectId !== subId);
+                saveUserDataToFirestore();
                 renderSubjects();
             }
         }
 
-        // Timetable Management
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        
+        // ==========================================
+        // TIMETABLE MANAGEMENT
+        // ==========================================
         function renderTimetable() {
             const container = document.getElementById('timetable-days-container');
-            container.innerHTML = '';
+            const days = [
+                { id: 1, name: 'Monday' },
+                { id: 2, name: 'Tuesday' },
+                { id: 3, name: 'Wednesday' },
+                { id: 4, name: 'Thursday' },
+                { id: 5, name: 'Friday' },
+                { id: 6, name: 'Saturday' },
+                { id: 0, name: 'Sunday' }
+            ];
 
-            const dayOrder = [1, 2, 3, 4, 5, 6, 0];
-            dayOrder.forEach(dayIdx => {
-                const dayClasses = appData.timetable.filter(t => t.day === dayIdx).sort((a,b) => a.time.localeCompare(b.time));
+            let html = '';
+            days.forEach(day => {
+                const daySlots = (appData.timetable || []).filter(t => t.day === day.id).sort((a,b) => a.time.localeCompare(b.time));
                 
-                let classesHtml = '';
-                if(dayClasses.length === 0) {
-                    classesHtml = `<p class="text-xs text-slate-500 italic py-2">No classes scheduled</p>`;
+                html += `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h4 class="font-bold text-white text-sm">${day.name}</h4>
+                        <span class="text-[10px] font-semibold text-slate-500">${daySlots.length} classes</span>
+                    </div>
+                    <div class="space-y-2">`;
+                
+                if (daySlots.length === 0) {
+                    html += `<p class="text-xs text-slate-600 py-2 text-center">No classes scheduled</p>`;
                 } else {
-                    dayClasses.forEach(c => {
-                        const sub = appData.subjects.find(s => s.id === c.subjectId);
-                        if(!sub) return;
-                        classesHtml += `
-                            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between text-xs">
-                                <div>
-                                    <span class="font-bold text-white block">${sub.name}</span>
-                                    <span class="text-slate-400">${c.time}</span>
-                                </div>
-                                <button onclick="deleteTimetableSlot('${c.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                    daySlots.forEach(slot => {
+                        const sub = (appData.subjects || []).find(s => s.id === slot.subjectId);
+                        const subName = sub ? sub.name : 'Unknown Subject';
+                        const subColor = sub ? sub.color : '#6366f1';
+
+                        html += `
+                        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 relative overflow-hidden flex items-center justify-between">
+                            <div class="absolute top-0 left-0 w-1 h-full" style="background-color: ${subColor}"></div>
+                            <div class="pl-2">
+                                <span class="text-[10px] font-semibold text-indigo-400">${slot.time}</span>
+                                <h5 class="font-semibold text-white text-xs leading-snug">${subName}</h5>
                             </div>
-                        `;
+                            <button onclick="deleteTimetableSlot('${slot.id}')" class="text-slate-600 hover:text-rose-400 p-1"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>`;
                     });
                 }
-
-                container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-                        <h4 class="font-bold text-sm text-white pb-2 border-b border-slate-800">${dayNames[dayIdx]}</h4>
-                        <div class="space-y-2">
-                            ${classesHtml}
-                        </div>
-                    </div>
-                `;
+                html += `</div></div>`;
             });
-            refreshIcons();
+            container.innerHTML = html;
+            lucide.createIcons();
         }
 
         function openTimetableModal() {
             const select = document.getElementById('tt-subject-id');
-            select.innerHTML = '';
+            if (!appData.subjects || appData.subjects.length === 0) {
+                alert("Please add at least one subject first.");
+                switchTab('subjects');
+                return;
+            }
+            let options = '';
             appData.subjects.forEach(sub => {
-                select.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                options += `<option value="${sub.id}">${sub.name} (${sub.code || ''})</option>`;
             });
+            select.innerHTML = options;
             document.getElementById('timetable-modal').classList.remove('hidden');
         }
 
@@ -1057,117 +1096,232 @@
             const day = parseInt(document.getElementById('tt-day').value);
             const time = document.getElementById('tt-time').value;
 
-            appData.timetable.push({ id: 'tt_' + Date.now(), subjectId, day, time });
-            saveData();
+            if (!appData.timetable) appData.timetable = [];
+            appData.timetable.push({
+                id: 'tt_' + Date.now(),
+                subjectId,
+                day,
+                time
+            });
+
+            saveUserDataToFirestore();
             closeTimetableModal();
             renderTimetable();
         }
 
-        function deleteTimetableSlot(id) {
-            appData.timetable = appData.timetable.filter(t => t.id !== id);
-            saveData();
+        function deleteTimetableSlot(slotId) {
+            appData.timetable = (appData.timetable || []).filter(t => t.id !== slotId);
+            saveUserDataToFirestore();
             renderTimetable();
         }
 
-        // Calendar Tab
+        // ==========================================
+        // ASSIGNMENTS MANAGEMENT
+        // ==========================================
+        function renderAssignments() {
+            const grid = document.getElementById('assignments-grid');
+            const tasks = (appData.assignments || []).filter(task => {
+                if (selectedAssignmentFilter === 'pending') return !task.completed;
+                if (selectedAssignmentFilter === 'completed') return task.completed;
+                return true;
+            });
+
+            if (tasks.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-500 text-sm">No assignments found matching this filter.</div>`;
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(task => {
+                const sub = (appData.subjects || []).find(s => s.id === task.subjectId);
+                const subName = sub ? sub.name : 'General Task';
+                const subColor = sub ? sub.color : '#6366f1';
+
+                html += `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${subColor}"></div>
+                    <div class="flex items-start justify-between pl-2">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${subName}</span>
+                            <h4 class="font-bold text-white text-base ${task.completed ? 'line-through text-slate-500' : ''}">${task.title}</h4>
+                        </div>
+                        <button onclick="toggleAssignment('${task.id}')" class="p-2 rounded-xl ${task.completed ? 'bg-emerald-600/20 text-emerald-400' : 'bg-slate-800 text-slate-400 hover:text-white'}">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    ${task.desc ? `<p class="pl-2 text-xs text-slate-400 leading-relaxed">${task.desc}</p>` : ''}
+                    <div class="pl-2 flex items-center justify-between text-xs pt-3 border-t border-slate-800/60">
+                        <span class="text-slate-400">Due: <strong class="text-indigo-400">${task.date}</strong></span>
+                        <button onclick="deleteAssignment('${task.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function filterAssignments(filter) {
+            selectedAssignmentFilter = filter;
+            ['all', 'pending', 'completed'].forEach(f => {
+                const btn = document.getElementById('filter-btn-' + f);
+                if (f === filter) {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg transition-all";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold bg-slate-800 text-slate-400 rounded-lg hover:text-white transition-all";
+                }
+            });
+            renderAssignments();
+        }
+
+        function openAssignmentModal() {
+            const select = document.getElementById('asg-subject-id');
+            if (!appData.subjects || appData.subjects.length === 0) {
+                alert("Please add at least one subject first.");
+                switchTab('subjects');
+                return;
+            }
+            let options = '';
+            appData.subjects.forEach(sub => {
+                options += `<option value="${sub.id}">${sub.name}</option>`;
+            });
+            select.innerHTML = options;
+            document.getElementById('assignment-form').reset();
+            document.getElementById('assignment-modal').classList.remove('hidden');
+        }
+
+        function closeAssignmentModal() {
+            document.getElementById('assignment-modal').classList.add('hidden');
+        }
+
+        function handleAssignmentSubmit(e) {
+            e.preventDefault();
+            const subjectId = document.getElementById('asg-subject-id').value;
+            const title = document.getElementById('asg-title').value.trim();
+            const date = document.getElementById('asg-date').value;
+            const desc = document.getElementById('asg-desc').value.trim();
+
+            if (!appData.assignments) appData.assignments = [];
+            appData.assignments.push({
+                id: 'asg_' + Date.now(),
+                subjectId,
+                title,
+                date,
+                desc,
+                completed: false
+            });
+
+            saveUserDataToFirestore();
+            closeAssignmentModal();
+            renderAssignments();
+        }
+
+        function toggleAssignment(id) {
+            const task = (appData.assignments || []).find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveUserDataToFirestore();
+                renderAssignments();
+            }
+        }
+
+        function deleteAssignment(id) {
+            appData.assignments = (appData.assignments || []).filter(t => t.id !== id);
+            saveUserDataToFirestore();
+            renderAssignments();
+        }
+
+        // ==========================================
+        // CALENDAR TAB VIEW
+        // ==========================================
         function changeCalendarMonth(delta) {
-            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + delta);
             renderCalendar();
         }
 
         function renderCalendar() {
-            const year = calendarDate.getFullYear();
-            const month = calendarDate.getMonth();
-            
-            document.getElementById('calendar-month-year').innerText = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
 
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const adjustedFirstDay = (firstDayIndex + 6) % 7;
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Monday start
             const totalDays = new Date(year, month + 1, 0).getDate();
-
             const grid = document.getElementById('calendar-grid');
-            grid.innerHTML = '';
 
-            for(let i = 0; i < adjustedFirstDay; i++) {
-                grid.innerHTML += `<div class="h-20 bg-slate-950/20 rounded-xl border border-transparent opacity-20"></div>`;
+            let html = '';
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div></div>`;
             }
 
-            for(let day = 1; day <= totalDays; day++) {
-                const monthStr = String(month + 1).padStart(2, '0');
-                const dayStr = String(day).padStart(2, '0');
-                const dateKey = `${year}-${monthStr}-${dayStr}`;
-
-                const dayLogs = appData.attendance[dateKey] || {};
-                const values = Object.values(dayLogs);
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayLogs = appData.attendance?.[dateStr] || {};
+                const statuses = Object.values(dayLogs);
                 
-                let indicatorClass = 'bg-slate-900 border-slate-800';
-                let indicatorDot = '';
-
-                if(values.length > 0) {
-                    const hasPresent = values.includes('present');
-                    const hasAbsent = values.includes('absent');
-                    if(hasPresent && !hasAbsent) {
-                        indicatorClass = 'bg-emerald-950/20 border-emerald-500/30';
-                        indicatorDot = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>';
-                    } else if(hasAbsent && !hasPresent) {
-                        indicatorClass = 'bg-rose-950/20 border-rose-500/30';
-                        indicatorDot = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>';
+                let dayBg = "bg-slate-950 border-slate-800";
+                let badgeIndicator = "";
+                if (statuses.length > 0) {
+                    const allPresent = statuses.every(s => s === 'present');
+                    const anyAbsent = statuses.some(s => s === 'absent');
+                    if (allPresent) {
+                        dayBg = "bg-emerald-950/30 border-emerald-500/40";
+                        badgeIndicator = `<div class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1"></div>`;
+                    } else if (anyAbsent) {
+                        dayBg = "bg-rose-950/30 border-rose-500/40";
+                        badgeIndicator = `<div class="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1"></div>`;
                     } else {
-                        indicatorClass = 'bg-amber-950/20 border-amber-500/30';
-                        indicatorDot = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>';
+                        badgeIndicator = `<div class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1"></div>`;
                     }
                 }
 
-                grid.innerHTML += `
-                    <div onclick="jumpToAttendanceDate('${dateKey}')" class="h-20 ${indicatorClass} border rounded-xl p-2 flex flex-col justify-between cursor-pointer hover:border-indigo-500/50 transition-all">
-                        <span class="text-xs font-semibold text-slate-300">${day}</span>
-                        <div class="flex items-center justify-center">${indicatorDot}</div>
-                    </div>
-                `;
+                html += `
+                <div onclick="jumpToDate('${dateStr}')" class="h-20 rounded-xl border ${dayBg} p-2 flex flex-col justify-between cursor-pointer hover:border-indigo-500 transition-all">
+                    <span class="text-xs font-bold text-slate-300">${day}</span>
+                    <div class="flex justify-center">${badgeIndicator}</div>
+                </div>`;
             }
+            grid.innerHTML = html;
         }
 
-        function jumpToAttendanceDate(dateKey) {
-            selectedAttendanceDate = dateKey;
+        function jumpToDate(dateStr) {
+            currentDate = dateStr;
+            document.getElementById('attendance-date-picker').value = dateStr;
             switchTab('attendance');
         }
 
-        // Settings Actions
+        // ==========================================
+        // SETTINGS & DATA EXPORT
+        // ==========================================
         function saveSettings() {
-            const target = parseInt(document.getElementById('settings-default-target').value);
+            const target = parseInt(document.getElementById('settings-default-target')) || 80;
+            if (!appData.settings) appData.settings = {};
             appData.settings.defaultTarget = target;
-            document.getElementById('sidebar-target-display').innerText = target + '%';
-            document.getElementById('sidebar-target-bar').style.width = target + '%';
-            saveData();
-            alert('Settings saved successfully!');
+            saveUserDataToFirestore();
+            initializeAppUI();
+            alert("Settings saved successfully!");
         }
 
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "attendly_backup.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `attendly_${appData.sapId || 'backup'}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
         }
 
         function resetAllData() {
-            if(confirm('Are you absolutely sure you want to clear all data? This cannot be undone.')) {
-                localStorage.removeItem('attendly_data');
-                location.reload();
+            if (confirm("Are you sure you want to reset all data for your account? This action cannot be undone.")) {
+                appData = JSON.parse(JSON.stringify(defaultUserData));
+                if(auth.currentUser && auth.currentUser.email) {
+                    appData.sapId = auth.currentUser.email.split('@')[0].toUpperCase();
+                }
+                saveUserDataToFirestore();
+                initializeAppUI();
+                alert("All data has been reset.");
             }
         }
-
-        // Init App on Load
-        function initApp() {
-            const target = appData.settings?.defaultTarget || 80;
-            document.getElementById('sidebar-target-display').innerText = target + '%';
-            document.getElementById('sidebar-target-bar').style.width = target + '%';
-        }
-
-        initApp();
-        switchTab('dashboard');
     </script>
 </body>
 </html>
