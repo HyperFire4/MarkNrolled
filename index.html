@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>MarkNrolled — Modern Student Attendance Tracker</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,9 +31,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root { color-scheme: dark; }
+        html { min-height: 100%; background: #020617; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+        }
+        button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (max-width: 767px) {
+            input, select, textarea { font-size: 16px !important; }
+            main { min-width: 0; }
+        }
     </style>
     <!-- MarkNrolled PWA support -->
     <link rel="manifest" href="./manifest.json">
@@ -47,8 +60,8 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row selection:bg-indigo-500 selection:text-white">
 
     <!-- SIMPLE SAP ID & PASSWORD LOGIN OVERLAY -->
-    <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-8 space-y-6 shadow-2xl relative overflow-hidden">
+    <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/95 p-4 backdrop-blur-md">
+        <div class="relative max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-6 overflow-y-auto overscroll-contain rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl sm:p-8">
             <div class="absolute -right-16 -top-16 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
             <div class="flex items-center gap-3">
@@ -77,20 +90,23 @@
     </div>
 
     <!-- Mobile Header -->
-    <header class="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
+    <header class="md:hidden sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/95 px-4 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))] backdrop-blur">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
                 <i data-lucide="check-check" class="w-4 h-4"></i>
             </div>
             <span class="font-bold text-lg tracking-tight">mark<span class="text-indigo-400">N</span>rolled</span>
         </div>
-        <button id="mobile-menu-btn" class="p-2 text-slate-400 hover:text-white">
+        <button id="mobile-menu-btn" type="button" aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false" class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-800/70 text-slate-300 transition hover:bg-slate-700 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
     </header>
 
+    <!-- Mobile navigation backdrop -->
+    <button id="sidebar-backdrop" type="button" aria-label="Close navigation menu" aria-hidden="true" tabindex="-1" class="fixed inset-0 z-30 hidden bg-slate-950/75 backdrop-blur-[2px] md:hidden"></button>
+
     <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <aside id="sidebar" aria-label="Main navigation" class="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[86vw] flex-col border-r border-slate-800 bg-slate-900 pt-[env(safe-area-inset-top)] shadow-2xl transition-transform duration-300 -translate-x-full md:w-64 md:translate-x-0 md:shadow-none">
         <div class="p-6 flex items-center justify-between border-b border-slate-800/60">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">
@@ -101,31 +117,31 @@
                     <span id="sidebar-sap-display" class="text-xs text-indigo-400 font-medium">SAP: ---</span>
                 </div>
             </div>
-            <button id="close-sidebar" class="md:hidden text-slate-400 hover:text-white">
+            <button id="close-sidebar" type="button" aria-label="Close navigation menu" class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white md:hidden">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
         <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="dashboard">
+            <button onclick="switchTab('dashboard')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="dashboard">
                 <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
             </button>
-            <button onclick="switchTab('attendance')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="attendance">
+            <button onclick="switchTab('attendance')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="attendance">
                 <i data-lucide="check-square" class="w-4 h-4"></i> Daily Attendance
             </button>
-            <button onclick="switchTab('assignments')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="assignments">
+            <button onclick="switchTab('assignments')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="assignments">
                 <i data-lucide="clipboard-list" class="w-4 h-4"></i> Assignments
             </button>
-            <button onclick="switchTab('subjects')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="subjects">
+            <button onclick="switchTab('subjects')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="subjects">
                 <i data-lucide="book-open" class="w-4 h-4"></i> Subjects
             </button>
-            <button onclick="switchTab('timetable')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="timetable">
+            <button onclick="switchTab('timetable')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="timetable">
                 <i data-lucide="calendar-days" class="w-4 h-4"></i> Timetable
             </button>
-            <button onclick="switchTab('calendar')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="calendar">
+            <button onclick="switchTab('calendar')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="calendar">
                 <i data-lucide="calendar" class="w-4 h-4"></i> Calendar View
             </button>
-            <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="settings">
+            <button onclick="switchTab('settings')" class="nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50" data-target="settings">
                 <i data-lucide="settings" class="w-4 h-4"></i> Settings
             </button>
         </nav>
@@ -147,7 +163,7 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 md:ml-64 p-4 md:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8">
+    <main class="min-w-0 w-full flex-1 px-3 py-4 pb-8 sm:p-4 md:ml-64 md:max-w-7xl md:p-8">
 
         <!-- DASHBOARD TAB -->
         <section id="tab-dashboard" class="space-y-6 tab-content">
@@ -156,38 +172,38 @@
                     <h2 id="greeting-title" class="text-2xl md:text-3xl font-bold tracking-tight text-white">Good morning! 👋</h2>
                     <p id="current-date-display" class="text-sm text-slate-400 mt-1">Loading date...</p>
                 </div>
-                <button onclick="switchTab('attendance')" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
+                <button onclick="switchTab('attendance')" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 sm:w-auto">
                     <i data-lucide="plus" class="w-4 h-4"></i> Mark Today's Attendance
                 </button>
             </div>
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+                <div class="min-w-0 rounded-2xl border border-slate-800/80 bg-slate-900 p-3 shadow-sm sm:p-5">
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Overall Attendance</span>
                     <div class="flex items-baseline gap-2 mt-2">
-                        <span id="stat-overall-pct" class="text-3xl font-bold text-white">0%</span>
+                        <span id="stat-overall-pct" class="text-2xl font-bold text-white sm:text-3xl">0%</span>
                         <span id="stat-overall-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">No Data</span>
                     </div>
                 </div>
-                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+                <div class="min-w-0 rounded-2xl border border-slate-800/80 bg-slate-900 p-3 shadow-sm sm:p-5">
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Classes Attended</span>
                     <div class="flex items-baseline gap-2 mt-2">
-                        <span id="stat-attended" class="text-3xl font-bold text-emerald-400">0</span>
+                        <span id="stat-attended" class="text-2xl font-bold text-emerald-400 sm:text-3xl">0</span>
                         <span class="text-xs text-slate-500">sessions</span>
                     </div>
                 </div>
-                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+                <div class="min-w-0 rounded-2xl border border-slate-800/80 bg-slate-900 p-3 shadow-sm sm:p-5">
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Classes Missed</span>
                     <div class="flex items-baseline gap-2 mt-2">
-                        <span id="stat-missed" class="text-3xl font-bold text-rose-400">0</span>
+                        <span id="stat-missed" class="text-2xl font-bold text-rose-400 sm:text-3xl">0</span>
                         <span class="text-xs text-slate-500">sessions</span>
                     </div>
                 </div>
-                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-sm">
+                <div class="min-w-0 rounded-2xl border border-slate-800/80 bg-slate-900 p-3 shadow-sm sm:p-5">
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Conducted</span>
                     <div class="flex items-baseline gap-2 mt-2">
-                        <span id="stat-total" class="text-3xl font-bold text-indigo-400">0</span>
+                        <span id="stat-total" class="text-2xl font-bold text-indigo-400 sm:text-3xl">0</span>
                         <span class="text-xs text-slate-500">classes</span>
                     </div>
                 </div>
@@ -308,8 +324,8 @@
                 </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
-                <div class="grid grid-cols-7 gap-2 mb-4 text-center">
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-3 shadow-sm sm:p-6">
+                <div class="mb-3 grid grid-cols-7 gap-1 text-center sm:mb-4 sm:gap-2">
                     <span class="text-xs font-bold text-slate-500">Mon</span>
                     <span class="text-xs font-bold text-slate-500">Tue</span>
                     <span class="text-xs font-bold text-slate-500">Wed</span>
@@ -318,7 +334,7 @@
                     <span class="text-xs font-bold text-slate-500">Sat</span>
                     <span class="text-xs font-bold text-slate-500">Sun</span>
                 </div>
-                <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2">
                     <!-- Populated via JS -->
                 </div>
             </div>
@@ -362,8 +378,8 @@
     </main>
 
     <!-- SUBJECT MODAL -->
-    <div id="subject-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+    <div id="subject-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
+        <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
             <div class="flex items-center justify-between">
                 <h3 id="subject-modal-title" class="text-lg font-bold text-white">Add Subject</h3>
                 <button onclick="closeSubjectModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -405,8 +421,8 @@
     </div>
 
     <!-- TIMETABLE MODAL -->
-    <div id="timetable-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+    <div id="timetable-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
+        <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white">Add Class to Timetable</h3>
                 <button onclick="closeTimetableModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -445,8 +461,8 @@
     </div>
 
     <!-- ASSIGNMENT MODAL -->
-    <div id="assignment-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+    <div id="assignment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
+        <div class="max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-2xl sm:p-6">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white">Add Assignment</h3>
                 <button onclick="closeAssignmentModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -550,6 +566,60 @@
             localStorage.setItem('marknrolled_data_' + currentSapId, JSON.stringify(appData));
         }
 
+        // ==========================================
+        // MOBILE NAVIGATION DRAWER
+        // ==========================================
+        function openMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const menuButton = document.getElementById('mobile-menu-btn');
+            if (!sidebar || !backdrop || !menuButton) return;
+
+            sidebar.classList.remove('-translate-x-full');
+            backdrop.classList.remove('hidden');
+            backdrop.setAttribute('aria-hidden', 'false');
+            menuButton.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const menuButton = document.getElementById('mobile-menu-btn');
+            if (!sidebar || !backdrop || !menuButton) return;
+
+            // md:translate-x-0 keeps the sidebar visible on desktop.
+            sidebar.classList.add('-translate-x-full');
+            backdrop.classList.add('hidden');
+            backdrop.setAttribute('aria-hidden', 'true');
+            menuButton.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function initializeMobileNavigation() {
+            const menuButton = document.getElementById('mobile-menu-btn');
+            const closeButton = document.getElementById('close-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+
+            menuButton?.addEventListener('click', () => {
+                const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
+                if (isOpen) closeMobileMenu();
+                else openMobileMenu();
+            });
+            closeButton?.addEventListener('click', closeMobileMenu);
+            backdrop?.addEventListener('click', closeMobileMenu);
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeMobileMenu();
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.matchMedia('(min-width: 768px)').matches) closeMobileMenu();
+            });
+        }
+
+        initializeMobileNavigation();
+
         window.addEventListener('DOMContentLoaded', () => {
             if (currentSapId) {
                 const savedData = localStorage.getItem('marknrolled_data_' + currentSapId);
@@ -585,15 +655,16 @@
         }
 
         function switchTab(tabId) {
+            closeMobileMenu();
             currentTab = tabId;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
 
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.getAttribute('data-target') === tabId) {
-                    btn.className = "nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
+                    btn.className = "nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
                 } else {
-                    btn.className = "nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50";
+                    btn.className = "nav-btn w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors text-slate-400 hover:text-white hover:bg-slate-800/50";
                 }
             });
 
@@ -1181,7 +1252,7 @@
                 }
 
                 html += `
-                <div onclick="jumpToDate('${dateStr}')" class="h-20 rounded-xl border ${dayBg} p-2 flex flex-col justify-between cursor-pointer hover:border-indigo-500 transition-all">
+                <div onclick="jumpToDate('${dateStr}')" class="flex h-14 cursor-pointer flex-col justify-between rounded-lg border ${dayBg} p-1.5 transition-all hover:border-indigo-500 sm:h-20 sm:rounded-xl sm:p-2">
                     <span class="text-xs font-bold text-slate-300">${day}</span>
                     <div class="flex justify-center">${badgeIndicator}</div>
                 </div>`;

@@ -1,4 +1,4 @@
-const CACHE_NAME = "marknrolled-shell-v1";
+const CACHE_NAME = "marknrolled-shell-v2";
 const APP_SHELL = [
   new URL("./", self.location.href).href,
   new URL("./index.html", self.location.href).href,
