@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendly — Modern Student Attendance Tracker</title>
+    <title>MarkNrolled — Modern Student Attendance Tracker</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -44,9 +44,11 @@
             <div class="absolute -right-16 -top-16 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30 text-xl">A</div>
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30 text-xl">
+                    <i data-lucide="check-check" class="w-6 h-6"></i>
+                </div>
                 <div>
-                    <h2 class="font-bold text-xl tracking-tight text-white">Attendly Login</h2>
+                    <h2 class="font-bold text-xl tracking-tight text-white">MarkNrolled Login</h2>
                     <p class="text-xs text-slate-400">Enter your SAP ID and password to access your dashboard</p>
                 </div>
             </div>
@@ -68,9 +70,11 @@
 
     <!-- Mobile Header -->
     <header class="md:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">A</div>
-            <span class="font-bold text-lg tracking-tight">Attendly</span>
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+                <i data-lucide="check-check" class="w-4 h-4"></i>
+            </div>
+            <span class="font-bold text-lg tracking-tight">mark<span class="text-indigo-400">N</span>rolled</span>
         </div>
         <button id="mobile-menu-btn" class="p-2 text-slate-400 hover:text-white">
             <i data-lucide="menu" class="w-6 h-6"></i>
@@ -81,9 +85,11 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0">
         <div class="p-6 flex items-center justify-between border-b border-slate-800/60">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">A</div>
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">
+                    <i data-lucide="check-check" class="w-5 h-5"></i>
+                </div>
                 <div>
-                    <h1 class="font-bold text-base tracking-tight leading-tight">Attendly</h1>
+                    <h1 class="font-bold text-base tracking-tight leading-tight">mark<span class="text-indigo-400">N</span>rolled</h1>
                     <span id="sidebar-sap-display" class="text-xs text-indigo-400 font-medium">SAP: ---</span>
                 </div>
             </div>
@@ -469,7 +475,7 @@
         // ==========================================
         // LOCAL STORAGE SAP ID SESSION LOGIC
         // ==========================================
-        let currentSapId = localStorage.getItem('attendly_current_sap') || null;
+        let currentSapId = localStorage.getItem('marknrolled_current_sap') || null;
         let appData = null;
 
         const defaultUserData = {
@@ -480,14 +486,24 @@
                 { id: 'sub_iks', name: 'Indian Knowledge System', code: 'HS-BT102', color: '#14b8a6', target: 80 },
                 { id: 'sub_em', name: 'Engineering Mathematics-I', code: 'BS-BT101', color: '#6366f1', target: 80 },
                 { id: 'sub_qp', name: 'Quantum Physics', code: 'BS-BT102', color: '#3b82f6', target: 80 },
-                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#ec4899', target: 80 }
+                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#ec4899', target: 80 },
+                { id: 'sub_hw', name: 'Health and Wellness', code: 'MC-BT101', color: '#f43f5e', target: 80 },
+                { id: 'sub_iil', name: 'Ideation and Innovation Lab', code: 'ES-BT103', color: '#8b5cf6', target: 80 }
             ],
             timetable: [
                 { id: 'tt_m1', subjectId: 'sub_spc', day: 1, time: '14:00' },
                 { id: 'tt_m2', subjectId: 'sub_amr', day: 1, time: '16:00' },
                 { id: 'tt_t1', subjectId: 'sub_iks', day: 2, time: '08:00' },
                 { id: 'tt_t2', subjectId: 'sub_em', day: 2, time: '10:00' },
-                { id: 'tt_t3', subjectId: 'sub_spc', day: 2, time: '12:00' }
+                { id: 'tt_t3', subjectId: 'sub_spc', day: 2, time: '12:00' },
+                { id: 'tt_w1', subjectId: 'sub_qp', day: 3, time: '08:00' },
+                { id: 'tt_w2', subjectId: 'sub_qp', day: 3, time: '11:00' },
+                { id: 'tt_w3', subjectId: 'sub_amr', day: 3, time: '12:00' },
+                { id: 'tt_w4', subjectId: 'sub_eclt', day: 3, time: '13:00' },
+                { id: 'tt_w5', subjectId: 'sub_em', day: 3, time: '14:00' },
+                { id: 'tt_th1', subjectId: 'sub_hw', day: 4, time: '09:00' },
+                { id: 'tt_th2', subjectId: 'sub_iil', day: 4, time: '11:00' },
+                { id: 'tt_f1', subjectId: 'sub_spc', day: 5, time: '10:00' }
             ],
             attendance: {},
             assignments: []
@@ -499,10 +515,9 @@
             if (!sapInput) return;
 
             currentSapId = sapInput.toUpperCase();
-            localStorage.setItem('attendly_current_sap', currentSapId);
+            localStorage.setItem('marknrolled_current_sap', currentSapId);
 
-            // Load data for this specific SAP ID from localStorage
-            const savedData = localStorage.getItem('attendly_data_' + currentSapId);
+            const savedData = localStorage.getItem('marknrolled_data_' + currentSapId);
             if (savedData) {
                 appData = JSON.parse(savedData);
             } else {
@@ -515,7 +530,7 @@
         }
 
         function logoutUser() {
-            localStorage.removeItem('attendly_current_sap');
+            localStorage.removeItem('marknrolled_current_sap');
             currentSapId = null;
             document.getElementById('auth-sap').value = '';
             document.getElementById('auth-password').value = '';
@@ -524,13 +539,12 @@
 
         function persistData() {
             if (!currentSapId) return;
-            localStorage.setItem('attendly_data_' + currentSapId, JSON.stringify(appData));
+            localStorage.setItem('marknrolled_data_' + currentSapId, JSON.stringify(appData));
         }
 
-        // Check if already logged in on page load
         window.addEventListener('DOMContentLoaded', () => {
             if (currentSapId) {
-                const savedData = localStorage.getItem('attendly_data_' + currentSapId);
+                const savedData = localStorage.getItem('marknrolled_data_' + currentSapId);
                 if (savedData) {
                     appData = JSON.parse(savedData);
                 } else {
@@ -1189,7 +1203,7 @@
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
             const dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `attendly_${currentSapId || 'backup'}.json`);
+            dlAnchorElem.setAttribute("download", `marknrolled_${currentSapId || 'backup'}.json`);
             document.body.appendChild(dlAnchorElem);
             dlAnchorElem.click();
             dlAnchorElem.remove();
