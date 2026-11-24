@@ -7,50 +7,97 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
-                    }
-                }
-            }
-        }
+        tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: {
+            sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Sora', 'Manrope', 'sans-serif'] } } } }
     </script>
-    <!-- Inter Font & Lucide Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { color-scheme: dark; }
-        html { min-height: 100%; background: #020617; }
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            min-height: 100dvh;
-            overflow-x: hidden;
-            overscroll-behavior-y: contain;
-        }
-        button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @media (max-width: 767px) {
-            input, select, textarea { font-size: 16px !important; }
-            main { min-width: 0; }
-        }
+:root{color-scheme:dark;--blue:#0a84ff;--blue-hi:#7cc4ff;--ink:rgba(255,255,255,.96);--ink-2:rgba(228,232,255,.68);--ink-3:rgba(228,232,255,.46);--edge:rgba(255,255,255,.17);--edge-soft:rgba(255,255,255,.09)}
+html{min-height:100%;background:#04050d}
+body{font-family:'Manrope',system-ui,-apple-system,sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-font-smoothing:antialiased}
+body.bg-slate-950{background:transparent}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+:focus-visible{outline:2px solid var(--blue-hi);outline-offset:2px}
+option{background:#141830;color:#fff}
+
+/* ambient light the glass refracts */
+.ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.ambient i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;animation:drift 32s ease-in-out infinite alternate}
+.ambient i:nth-child(1){width:48vmax;height:48vmax;left:-14vmax;top:-16vmax;background:#2b5bff}
+.ambient i:nth-child(2){width:40vmax;height:40vmax;right:-12vmax;top:16vh;background:#b14dff;animation-delay:-10s}
+.ambient i:nth-child(3){width:36vmax;height:36vmax;left:20vw;bottom:-18vmax;background:#10c4b0;animation-delay:-18s}
+@keyframes drift{to{transform:translate3d(6vmax,-4vmax,0) scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.ambient i{animation:none}*{transition-duration:.01ms!important}}
+
+/* type */
+body h1,body h2,body h3,body h4,body h5,body .text-3xl,body .text-2xl,body .font-extrabold{font-family:'Sora','Manrope',sans-serif;letter-spacing:-.025em}
+body .uppercase{text-transform:none}body .tracking-wider{letter-spacing:0}
+body .text-white,body .text-slate-100{color:var(--ink)}
+body .text-slate-300,body .hover\:text-slate-300:hover{color:rgba(228,232,255,.84)}
+body .text-slate-400{color:var(--ink-2)}body .text-slate-500{color:var(--ink-3)}body .text-slate-600{color:rgba(228,232,255,.32)}
+body .text-indigo-400{color:var(--blue-hi)}body .hover\:text-indigo-300:hover{color:#b8deff}
+body .text-emerald-400{color:#4ae276}body .text-rose-400,body .hover\:text-rose-400:hover{color:#ff8a80}
+
+/* liquid glass surfaces */
+body .bg-slate-900,body .glass-hero{background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05) 48%,rgba(255,255,255,.09));-webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 1px 0 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(255,255,255,.07),inset 0 0 30px rgba(255,255,255,.04),0 14px 40px -14px rgba(0,0,0,.6)}
+body .fixed .bg-slate-900,body aside.bg-slate-900{background:linear-gradient(135deg,rgba(40,46,86,.62),rgba(22,26,52,.55));-webkit-backdrop-filter:blur(40px) saturate(200%);backdrop-filter:blur(40px) saturate(200%)}
+body .bg-slate-900\/95{background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.07));-webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 10px 30px -10px rgba(0,0,0,.6)}
+body .glass-hero{background:radial-gradient(120% 150% at 100% 0%,rgba(10,132,255,.34),transparent 60%),radial-gradient(90% 120% at 0% 100%,rgba(191,90,242,.2),transparent 60%),linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.05))}
+body input.bg-slate-950,body select.bg-slate-950,body textarea.bg-slate-950{background:rgba(0,0,0,.3);box-shadow:inset 0 2px 4px rgba(0,0,0,.35),inset 0 -1px 0 rgba(255,255,255,.07)}
+body div.bg-slate-950{background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.04));-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+body .bg-slate-950\/60{background:rgba(0,0,0,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+body .bg-slate-950\/80,body .bg-slate-950\/75{background:rgba(6,8,22,.42)}body .bg-slate-950\/95{background:rgba(4,5,13,.5)}
+body .bg-slate-800,body .bg-slate-700\/50{background:rgba(255,255,255,.1)}
+body .bg-slate-800\/40{background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+body .bg-slate-800\/60,body .bg-slate-800\/70{background:rgba(255,255,255,.1)}
+body .hover\:bg-slate-800:hover,body .hover\:bg-slate-800\/50:hover{background:rgba(255,255,255,.13)}body .hover\:bg-slate-700:hover{background:rgba(255,255,255,.18)}
+body .border-slate-800,body .border-slate-800\/80,body .border-slate-700\/70,body .border-slate-700\/50{border-color:var(--edge)}
+body .border-slate-800\/60{border-color:var(--edge-soft)}body .border-indigo-500\/20{border-color:rgba(124,196,255,.32)}
+body .hover\:border-indigo-500:hover,body .focus\:border-indigo-500:focus{border-color:var(--blue-hi)}
+body .focus\:border-indigo-500:focus{box-shadow:0 0 0 4px rgba(10,132,255,.28),inset 0 2px 4px rgba(0,0,0,.3);outline:none}
+body .focus\:ring-indigo-500:focus{--tw-ring-color:var(--blue-hi)}
+body .rounded-lg{border-radius:14px}body .rounded-xl{border-radius:18px}body .rounded-2xl{border-radius:26px}body .rounded-3xl{border-radius:34px}
+
+/* tinted glass controls */
+body .bg-indigo-600,body .bg-emerald-600,body .bg-rose-600{color:#fff}
+body .bg-indigo-600{background:linear-gradient(180deg,rgba(100,176,255,.95),rgba(10,120,245,.84));box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -8px 16px rgba(0,60,180,.25),0 8px 24px -6px rgba(10,132,255,.6)}
+body .hover\:bg-indigo-500:hover{background:linear-gradient(180deg,rgba(130,194,255,1),rgba(30,138,255,.9))}
+body .bg-emerald-600{background:linear-gradient(180deg,rgba(90,230,130,.95),rgba(30,180,80,.84));box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.55),0 8px 22px -6px rgba(48,209,88,.55)}
+body .bg-rose-600{background:linear-gradient(180deg,rgba(255,140,128,.95),rgba(235,60,52,.84));box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.55),0 8px 22px -6px rgba(255,69,58,.55)}
+body .bg-indigo-500{background:linear-gradient(90deg,#0a84ff,#7cc4ff);box-shadow:0 0 12px rgba(10,132,255,.6)}
+body .bg-indigo-600\/20{background:rgba(10,132,255,.24);box-shadow:inset 0 0 0 1px rgba(124,196,255,.3)}body .hover\:bg-indigo-600\/30:hover{background:rgba(10,132,255,.36)}
+body .bg-indigo-500\/10{background:rgba(10,132,255,.16)}body .bg-indigo-400{background:#7cc4ff}
+body .bg-emerald-600\/20,body .bg-emerald-500\/20{background:rgba(48,209,88,.2);box-shadow:inset 0 0 0 1px rgba(74,226,118,.3)}
+body .bg-rose-600\/20,body .bg-rose-500\/20{background:rgba(255,69,58,.2);box-shadow:inset 0 0 0 1px rgba(255,138,128,.3)}
+body .hover\:bg-rose-600\/20:hover,body .hover\:bg-rose-600\/30:hover{background:rgba(255,69,58,.32)}
+body .bg-emerald-400,body .bg-emerald-500{background:#4ae276}body .bg-rose-400{background:#ff8a80}
+body .bg-emerald-950\/30{background:rgba(48,209,88,.14)}body .bg-rose-950\/30{background:rgba(255,69,58,.14)}
+body .border-emerald-500\/40{border-color:rgba(74,226,118,.5)}body .border-rose-500\/40{border-color:rgba(255,138,128,.5)}
+
+/* floating shell */
+body #sidebar{top:12px;bottom:12px;left:12px;height:auto;border-radius:30px;border:1px solid var(--edge)}
+body #sidebar.-translate-x-full{--tw-translate-x:calc(-100% - 24px)}
+@media (min-width:768px){body main.md\:ml-64{margin-left:17.5rem}}
+body>header.sticky{margin:8px 10px 0;top:6px;border-radius:26px;border:1px solid var(--edge)}
+.nav-btn{transition:background .2s,color .2s}
+
+/* subject palette */
+.swatch-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:9px;padding-top:6px}
+.swatch{aspect-ratio:1;border-radius:50%;background:var(--c);border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 2px 3px rgba(255,255,255,.6),inset 0 -3px 6px rgba(0,0,0,.22),0 4px 12px -2px color-mix(in srgb,var(--c) 70%,transparent);transition:transform .15s;position:relative;cursor:pointer}
+.swatch:hover{transform:scale(1.12)}
+.swatch.is-selected{outline:2px solid #fff;outline-offset:3px}
+.swatch-custom{background:conic-gradient(#ff453a,#ff9f0a,#ffd60a,#30d158,#40c8e0,#0a84ff,#bf5af2,#ff375f,#ff453a);overflow:hidden}
+.swatch-custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+@media (max-width:767px){input,select,textarea{font-size:16px!important}main{min-width:0}}
     </style>
     <!-- MarkNrolled PWA support -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#020617">
+    <meta name="theme-color" content="#04050d">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -58,6 +105,7 @@
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col md:flex-row selection:bg-indigo-500 selection:text-white">
+    <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
 
     <!-- SIMPLE SAP ID & PASSWORD LOGIN OVERLAY -->
     <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/95 p-4 backdrop-blur-md">
@@ -169,7 +217,7 @@
         <section id="tab-dashboard" class="space-y-6 tab-content">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 id="greeting-title" class="text-2xl md:text-3xl font-bold tracking-tight text-white">Good morning! 👋</h2>
+                    <h2 id="greeting-title" class="text-2xl md:text-3xl font-bold tracking-tight text-white">Good morning</h2>
                     <p id="current-date-display" class="text-sm text-slate-400 mt-1">Loading date...</p>
                 </div>
                 <button onclick="switchTab('attendance')" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 sm:w-auto">
@@ -210,7 +258,7 @@
             </div>
 
             <!-- Prominent Insights Banner -->
-            <div class="bg-gradient-to-br from-slate-900 to-indigo-950/40 border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div class="glass-hero border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 <h3 class="text-sm font-semibold uppercase tracking-wider text-indigo-400 mb-4 flex items-center gap-2">
                     <i data-lucide="sparkles" class="w-4 h-4"></i> Intelligent Attendance Insights
@@ -224,7 +272,7 @@
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-bold text-white tracking-tight">Subject Breakdown</h3>
-                    <button onclick="switchTab('subjects')" class="text-xs font-medium text-indigo-400 hover:text-indigo-300">Manage Subjects →</button>
+                    <button onclick="switchTab('subjects')" class="text-xs font-medium text-indigo-400 hover:text-indigo-300">Manage subjects</button>
                 </div>
                 <div id="dashboard-subjects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Populated via JavaScript -->
@@ -402,15 +450,9 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Color Accent</label>
-                    <div class="flex gap-2 pt-1" id="color-picker-container">
-                        <button type="button" onclick="selectColor('#6366f1')" class="w-8 h-8 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-offset-slate-900 ring-indigo-500 color-opt" data-color="#6366f1"></button>
-                        <button type="button" onclick="selectColor('#ec4899')" class="w-8 h-8 rounded-full bg-pink-500 color-opt" data-color="#ec4899"></button>
-                        <button type="button" onclick="selectColor('#10b981')" class="w-8 h-8 rounded-full bg-emerald-500 color-opt" data-color="#10b981"></button>
-                        <button type="button" onclick="selectColor('#f59e0b')" class="w-8 h-8 rounded-full bg-amber-500 color-opt" data-color="#f59e0b"></button>
-                        <button type="button" onclick="selectColor('#3b82f6')" class="w-8 h-8 rounded-full bg-blue-500 color-opt" data-color="#3b82f6"></button>
-                        <button type="button" onclick="selectColor('#8b5cf6')" class="w-8 h-8 rounded-full bg-violet-500 color-opt" data-color="#8b5cf6"></button>
-                    </div>
-                    <input type="hidden" id="sub-color" value="#6366f1">
+                    <div class="swatch-grid" id="color-picker-container" role="group" aria-label="Subject colour"></div>
+                    <p id="color-name" class="text-xs text-slate-400 mt-2"></p>
+                    <input type="hidden" id="sub-color" value="#0A84FF">
                 </div>
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="closeSubjectModal()" class="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white">Cancel</button>
@@ -499,20 +541,50 @@
         // ==========================================
         // LOCAL STORAGE SAP ID SESSION LOGIC
         // ==========================================
+        const PALETTE = [
+            {n:'Coral',c:'#FF6B5E'},{n:'Orange',c:'#FF9F0A'},{n:'Gold',c:'#FFD60A'},{n:'Lime',c:'#B6E83A'},
+            {n:'Green',c:'#30D158'},{n:'Mint',c:'#6EE7B7'},{n:'Teal',c:'#22B8CF'},{n:'Sky',c:'#5AC8FA'},
+            {n:'Blue',c:'#0A84FF'},{n:'Indigo',c:'#7C7CFF'},{n:'Violet',c:'#9F7AEA'},{n:'Purple',c:'#BF5AF2'},
+            {n:'Magenta',c:'#E255D8'},{n:'Pink',c:'#FF5FA2'},{n:'Sand',c:'#C9A27E'},{n:'Graphite',c:'#98989F'}
+        ];
+        // old default colours -> new palette (applied once per account)
+        const LEGACY_COLORS = {
+            sub_spc:['#10b981','#22B8CF'], sub_amr:['#f59e0b','#FF9F0A'], sub_iks:['#14b8a6','#FFD60A'], sub_em:['#0A84FF','#0A84FF'],
+            sub_qp:['#3b82f6','#BF5AF2'], sub_eclt:['#ec4899','#FF5FA2'], sub_hw:['#f43f5e','#30D158'], sub_iil:['#8b5cf6','#7C7CFF']
+        };
+        function migrateColors() {
+            if (!appData) return;
+            if (!appData.settings) appData.settings = {};
+            if (appData.settings.paletteV2) return;
+            (appData.subjects || []).forEach(sub => {
+                const m = LEGACY_COLORS[sub.id];
+                if (m && (sub.color || '').toLowerCase() === m[0].toLowerCase()) sub.color = m[1];
+                else if (!sub.color || sub.color.toLowerCase() === '#6366f1') sub.color = '#0A84FF';
+            });
+            appData.settings.paletteV2 = true;
+            persistData();
+        }
+        function renderColorPicker() {
+            const box = document.getElementById('color-picker-container');
+            if (!box || box.dataset.ready) return;
+            box.dataset.ready = '1';
+            box.innerHTML = PALETTE.map(p => `<button type="button" class="swatch" style="--c:${p.c}" data-color="${p.c}" title="${p.n}" aria-label="${p.n}" onclick="selectColor('${p.c}')"></button>`).join('') +
+                `<label class="swatch swatch-custom" id="swatch-custom" title="Custom colour"><input type="color" id="custom-color-input" aria-label="Custom colour" oninput="selectColor(this.value)"></label>`;
+        }
         let currentSapId = localStorage.getItem('marknrolled_current_sap') || null;
         let appData = null;
 
         const defaultUserData = {
             settings: { defaultTarget: 80 },
             subjects: [
-                { id: 'sub_spc', name: 'Structural Programming using C', code: 'ES-BT101', color: '#10b981', target: 80 },
-                { id: 'sub_amr', name: 'Applied Mechanics and Robotics', code: 'ES-BT102', color: '#f59e0b', target: 80 },
-                { id: 'sub_iks', name: 'Indian Knowledge System', code: 'HS-BT102', color: '#14b8a6', target: 80 },
-                { id: 'sub_em', name: 'Engineering Mathematics-I', code: 'BS-BT101', color: '#6366f1', target: 80 },
-                { id: 'sub_qp', name: 'Quantum Physics', code: 'BS-BT102', color: '#3b82f6', target: 80 },
-                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#ec4899', target: 80 },
-                { id: 'sub_hw', name: 'Health and Wellness', code: 'MC-BT101', color: '#f43f5e', target: 80 },
-                { id: 'sub_iil', name: 'Ideation and Innovation Lab', code: 'ES-BT103', color: '#8b5cf6', target: 80 }
+                { id: 'sub_spc', name: 'Structural Programming using C', code: 'ES-BT101', color: '#22B8CF', target: 80 },
+                { id: 'sub_amr', name: 'Applied Mechanics and Robotics', code: 'ES-BT102', color: '#FF9F0A', target: 80 },
+                { id: 'sub_iks', name: 'Indian Knowledge System', code: 'HS-BT102', color: '#FFD60A', target: 80 },
+                { id: 'sub_em', name: 'Engineering Mathematics-I', code: 'BS-BT101', color: '#0A84FF', target: 80 },
+                { id: 'sub_qp', name: 'Quantum Physics', code: 'BS-BT102', color: '#BF5AF2', target: 80 },
+                { id: 'sub_eclt', name: 'Engg. Communication & Lean Thinking', code: 'HS-BT101', color: '#FF5FA2', target: 80 },
+                { id: 'sub_hw', name: 'Health and Wellness', code: 'MC-BT101', color: '#30D158', target: 80 },
+                { id: 'sub_iil', name: 'Ideation and Innovation Lab', code: 'ES-BT103', color: '#7C7CFF', target: 80 }
             ],
             timetable: [
                 { id: 'tt_m1', subjectId: 'sub_spc', day: 1, time: '14:00' },
@@ -644,6 +716,8 @@
         let selectedAssignmentFilter = 'all';
 
         function initializeAppUI() {
+            migrateColors();
+            renderColorPicker();
             document.getElementById('sidebar-sap-display').innerText = "SAP: " + currentSapId;
             document.getElementById('settings-default-target').value = appData.settings?.defaultTarget || 80;
             document.getElementById('sidebar-target-display').innerText = (appData.settings?.defaultTarget || 80) + '%';
@@ -684,9 +758,9 @@
         function renderDashboard() {
             const now = new Date();
             const hours = now.getHours();
-            let greeting = "Good morning! 👋";
-            if (hours >= 12 && hours < 17) greeting = "Good afternoon! ☀️";
-            else if (hours >= 17) greeting = "Good evening! 🌙";
+            let greeting = "Good morning";
+            if (hours >= 12 && hours < 17) greeting = "Good afternoon";
+            else if (hours >= 17) greeting = "Good evening";
             document.getElementById('greeting-title').innerText = greeting;
             document.getElementById('current-date-display').innerText = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -743,7 +817,7 @@
 
                 html += `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="absolute inset-0 pointer-events-none" style="z-index:-1;background:radial-gradient(120% 100% at 0% 0%, ${sub.color || '#0A84FF'}33, transparent 62%)"></div><div class="absolute top-4 bottom-4 left-3 w-1 rounded-full" style="background-color: ${sub.color || '#0A84FF'};box-shadow:0 0 14px ${sub.color || '#0A84FF'}aa"></div>
                     <div class="flex items-start justify-between pl-2">
                         <div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
@@ -753,7 +827,7 @@
                     </div>
                     <div class="pl-2 space-y-1.5">
                         <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500" style="width: ${subPct}%; background-color: ${sub.color || '#6366f1'}"></div>
+                            <div class="h-full rounded-full transition-all duration-500" style="width: ${subPct}%; background-color: ${sub.color || '#0A84FF'}"></div>
                         </div>
                         <div class="flex items-center justify-between text-xs text-slate-400">
                             <span>Attended: <strong class="text-white">${subAttended}/${subTotal}</strong></span>
@@ -814,7 +888,7 @@
                 </div>
                 <div class="flex flex-col gap-2 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
                     <span class="text-xs font-medium text-slate-400">Current Safety Margin</span>
-                    <span class="text-lg font-bold text-white">${overallPct >= target ? 'Safe Zone 🟢' : 'Recovery Needed 🔴'}</span>
+                    <span class="text-lg font-bold text-white">${overallPct >= target ? '<span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 mr-2"></span>Safe zone' : '<span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-400 mr-2"></span>Recovery needed'}</span>
                     <span class="text-[11px] text-slate-500">Goal set to ${target}% attendance criteria.</span>
                 </div>`;
         }
@@ -857,7 +931,7 @@
 
                 html += `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="absolute inset-0 pointer-events-none" style="z-index:-1;background:radial-gradient(120% 100% at 0% 0%, ${sub.color || '#0A84FF'}33, transparent 62%)"></div><div class="absolute top-4 bottom-4 left-3 w-1 rounded-full" style="background-color: ${sub.color || '#0A84FF'};box-shadow:0 0 14px ${sub.color || '#0A84FF'}aa"></div>
                     <div class="pl-2">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
                         <h4 class="font-bold text-white text-sm">${sub.name}</h4>
@@ -898,7 +972,7 @@
             appData.subjects.forEach(sub => {
                 html += `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${sub.color || '#6366f1'}"></div>
+                    <div class="absolute inset-0 pointer-events-none" style="z-index:-1;background:radial-gradient(120% 100% at 0% 0%, ${sub.color || '#0A84FF'}33, transparent 62%)"></div><div class="absolute top-4 bottom-4 left-3 w-1 rounded-full" style="background-color: ${sub.color || '#0A84FF'};box-shadow:0 0 14px ${sub.color || '#0A84FF'}aa"></div>
                     <div class="flex items-start justify-between pl-2">
                         <div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${sub.code || 'COURSE'}</span>
@@ -928,13 +1002,13 @@
                     document.getElementById('sub-name').value = sub.name;
                     document.getElementById('sub-code').value = sub.code || '';
                     document.getElementById('sub-target').value = sub.target || 80;
-                    selectColor(sub.color || '#6366f1');
+                    selectColor(sub.color || '#0A84FF');
                 }
             } else {
                 document.getElementById('subject-modal-title').innerText = "Add Subject";
                 document.getElementById('subject-form').reset();
                 document.getElementById('edit-subject-id').value = '';
-                selectColor('#6366f1');
+                selectColor('#0A84FF');
             }
         }
 
@@ -943,14 +1017,20 @@
         }
 
         function selectColor(colorHex) {
-            document.getElementById('sub-color').value = colorHex;
-            document.querySelectorAll('.color-opt').forEach(btn => {
-                if (btn.getAttribute('data-color') === colorHex) {
-                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-offset-slate-900', 'ring-indigo-500');
-                } else {
-                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-offset-slate-900', 'ring-indigo-500');
-                }
+            const hex = colorHex || '#0A84FF';
+            renderColorPicker();
+            document.getElementById('sub-color').value = hex;
+            let matched = false;
+            document.querySelectorAll('.swatch[data-color]').forEach(btn => {
+                const on = btn.dataset.color.toLowerCase() === hex.toLowerCase();
+                btn.classList.toggle('is-selected', on);
+                btn.setAttribute('aria-pressed', on);
+                if (on) { matched = true; document.getElementById('color-name').textContent = btn.title; }
             });
+            const custom = document.getElementById('swatch-custom');
+            custom.classList.toggle('is-selected', !matched);
+            custom.style.background = matched ? '' : hex;
+            if (!matched) document.getElementById('color-name').textContent = 'Custom ' + hex.toUpperCase();
         }
 
         function handleSubjectSubmit(e) {
@@ -1029,11 +1109,11 @@
                     daySlots.forEach(slot => {
                         const sub = (appData.subjects || []).find(s => s.id === slot.subjectId);
                         const subName = sub ? sub.name : 'Unknown Subject';
-                        const subColor = sub ? sub.color : '#6366f1';
+                        const subColor = sub ? sub.color : '#0A84FF';
 
                         html += `
                         <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3 relative overflow-hidden flex items-center justify-between">
-                            <div class="absolute top-0 left-0 w-1 h-full" style="background-color: ${subColor}"></div>
+                            <div class="absolute inset-0 pointer-events-none" style="z-index:-1;background:radial-gradient(120% 100% at 0% 0%, ${subColor}33, transparent 62%)"></div><div class="absolute top-4 bottom-4 left-3 w-1 rounded-full" style="background-color: ${subColor};box-shadow:0 0 14px ${subColor}aa"></div>
                             <div class="pl-2">
                                 <span class="text-[10px] font-semibold text-indigo-400">${slot.time}</span>
                                 <h5 class="font-semibold text-white text-xs leading-snug">${subName}</h5>
@@ -1112,11 +1192,11 @@
             tasks.forEach(task => {
                 const sub = (appData.subjects || []).find(s => s.id === task.subjectId);
                 const subName = sub ? sub.name : 'General Task';
-                const subColor = sub ? sub.color : '#6366f1';
+                const subColor = sub ? sub.color : '#0A84FF';
 
                 html += `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${subColor}"></div>
+                    <div class="absolute inset-0 pointer-events-none" style="z-index:-1;background:radial-gradient(120% 100% at 0% 0%, ${subColor}33, transparent 62%)"></div><div class="absolute top-4 bottom-4 left-3 w-1 rounded-full" style="background-color: ${subColor};box-shadow:0 0 14px ${subColor}aa"></div>
                     <div class="flex items-start justify-between pl-2">
                         <div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${subName}</span>
@@ -1270,7 +1350,7 @@
         // SETTINGS & DATA EXPORT
         // ==========================================
         function saveSettings() {
-            const target = parseInt(document.getElementById('settings-default-target')) || 80;
+            const target = parseInt(document.getElementById('settings-default-target').value) || 80;
             if (!appData.settings) appData.settings = {};
             appData.settings.defaultTarget = target;
             persistData();
