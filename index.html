@@ -81,7 +81,8 @@ body .border-emerald-500\/40{border-color:rgba(74,226,118,.5)}body .border-rose-
 
 /* floating shell */
 body #sidebar{top:12px;bottom:12px;left:12px;height:auto;border-radius:30px;border:1px solid var(--edge)}
-body #sidebar.-translate-x-full{--tw-translate-x:calc(-100% - 24px)}
+@media (max-width:767px){body #sidebar.-translate-x-full{--tw-translate-x:calc(-100% - 24px)}}
+@media (min-width:768px){body #sidebar{--tw-translate-x:0px}}
 @media (min-width:768px){body main.md\:ml-64{margin-left:17.5rem}}
 body>header.sticky{margin:8px 10px 0;top:6px;border-radius:26px;border:1px solid var(--edge)}
 .nav-btn{transition:background .2s,color .2s}
